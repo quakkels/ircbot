@@ -2,6 +2,9 @@
   "version": "1.0.0-*",
   "testRunner": "xunit",
   "description": "IrcBot.Tests Unit Testing Library",
+  "buildOptions": {
+    "debugType": "portable"
+  },
   "dependencies": {
     "Microsoft.NETCore.App": {
       "type": "platform",
