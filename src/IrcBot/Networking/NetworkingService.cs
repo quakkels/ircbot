@@ -2,6 +2,8 @@ using IrcBot.Utilities;
 using System;
 using System.Threading.Tasks;
 using IrcBot.Io;
+using System.Collections.Generic;
+using IrcBot.Behaviors;
 
 namespace IrcBot.Networking
 {
@@ -10,6 +12,7 @@ namespace IrcBot.Networking
         private IConfigurationProvider _config;
         private ITcpClientWrapper _tcpClient;
         private IIoService _ioService;
+        private List<IBehavior> _behaviors = new List<IBehavior>();
 
         public NetworkingService(
             ITcpClientWrapper tcpClient, 
@@ -23,6 +26,8 @@ namespace IrcBot.Networking
 
         public async Task Connect()
         {
+            RegisterBehaviors();
+            
             await _tcpClient.ConnectAsync(_config.Host, _config.Port);
             
             _ioService.Setup(_tcpClient.GetStream());
@@ -33,15 +38,16 @@ namespace IrcBot.Networking
             string input = null;
             while ((input = _ioService.ReadLine()) != null)
             {
-                if (input.StartsWith("PING"))
+                foreach (var behavior in _behaviors)
                 {
-                    var inputChars = input.ToCharArray();
-                    inputChars[1] = 'O';
-                    var response = new string(inputChars);
-                    _ioService.WriteLine(response);
-                    _ioService.Flush();
+                    behavior.Evaluate(input);
                 }
             }
+        }
+        
+        private void RegisterBehaviors()
+        {
+            _behaviors.Add(new PongBehavior(_ioService));
         }
         
         private bool _isDisposed = false;
